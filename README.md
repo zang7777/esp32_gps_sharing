@@ -1,120 +1,237 @@
-#  Artemis GPS & IMU Tracker
-
-![Project Status](https://img.shields.io/badge/status-active-success.svg)
-![Platform](https://img.shields.io/badge/platform-ESP32-blue.svg)
-![Backend](https://img.shields.io/badge/backend-Flask-green.svg)
-![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)
-
-> **A real-time tracking system capable of capturing GPS and Sensor data from mobile devices via ESP32, visualizing it instantly on a sleek Admin Dashboard.**
-
----
-
-##  System Architecture
-
-This system acts as a bridge between mobile devices and a central server, ensuring seamless data flow even in complex network environments.
-
-```mermaid
-graph LR
-    A[ Mobile Phone] -- WiFi (Hotspot) --> B[ ESP32 Bridge]
-    B -- WiFi (Home/Office) --> C[ Flask Server]
-    C --> D[ Admin Dashboard]
+```
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║   █████╗ ██████╗ ████████╗███████╗███╗   ███╗██╗███████╗                 ║
+║  ██╔══██╗██╔══██╗╚══██╔══╝██╔════╝████╗ ████║██║██╔════╝                 ║
+║  ███████║██████╔╝   ██║   █████╗  ██╔████╔██║██║███████╗                 ║
+║  ██╔══██║██╔══██╗   ██║   ██╔══╝  ██║╚██╔╝██║██║╚════██║                 ║
+║  ██║  ██║██║  ██║   ██║   ███████╗██║ ╚═╝ ██║██║███████║                 ║
+║  ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝     ╚═╝╚═╝╚══════╝                 ║
+║                                                                          ║
+║        ⬡  Real-time GPS tracking. No SIM. No subscription.  ⬡           ║
+╚══════════════════════════════════════════════════════════════════════════╝
 ```
 
-| Component | Role | Network IP |
-|-----------|------|------------|
-| ** Phone** | Sends GPS/IMU Data | `192.168.4.x` |
-| ** ESP32** | Bridge (AP + Station) | `192.168.4.1` (AP) |
-| ** Server** | Data Processing | `10.101.79.87` (Example) |
+<div align="center">
+
+[![Platform](https://img.shields.io/badge/Hardware-ESP32-E74C3C?style=for-the-badge&logo=espressif&logoColor=white)](https://espressif.com)
+[![Backend](https://img.shields.io/badge/Backend-Flask-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
+[![Firmware](https://img.shields.io/badge/Firmware-PlatformIO-F5822A?style=for-the-badge&logo=platformio&logoColor=white)](https://platformio.org)
+[![License](https://img.shields.io/badge/License-MIT-10B981?style=for-the-badge)](LICENSE)
+[![Language](https://img.shields.io/badge/C%2B%2B%20%7C%20Python%20%7C%20HTML-39.4%25%20%7C%2032.8%25%20%7C%2023%25-3B82F6?style=for-the-badge)]()
+
+**Track any phone in real-time — using only an ESP32 and WiFi.**  
+*No SIM card. No paid APIs. No monthly cost.*
+
+</div>
 
 ---
 
-##  Quick Start Guide
+## ⬡ The Problem
 
-### 1 Configure Firmware
-Open `src/config.h` and update your network credentials:
+Every real-time GPS tracker solution out there has a catch:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Commercial trackers    →  $10–30/month SIM data plan           │
+│  Google Maps sharing    →  Requires internet on tracked device  │
+│  GSM modules (SIM800)   →  Extra hardware + carrier required    │
+│  BLE trackers           →  10 metre range only                  │
+│                                                                 │
+│  Artemis               →  ESP32 + WiFi. That's it. Free.       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## ⬡ How It Works
+
+The magic is the ESP32 running in **dual WiFi mode simultaneously** — Access Point + Station at the same time.
+
+```
+                    ┌─────────────────────────────────────┐
+                    │                                     │
+   📱  Phone        │        ESP32 Bridge                 │      💻 Server
+  ─────────         │  ┌──────────────┐ ┌─────────────┐  │   ─────────────
+  Connects to  ───▶ │  │  AP Mode     │ │Station Mode │  │ ▶  Flask App
+  ESP32 hotspot     │  │ 192.168.4.1  │ │ Home WiFi   │  │    Live Dashboard
+  Opens browser     │  └──────────────┘ └─────────────┘  │    Real-time Map
+  Shares GPS data   │         ↕ bridges data ↕            │
+                    └─────────────────────────────────────┘
+
+  Phone needs NO internet.     Server gets live GPS feed.
+```
+
+The phone connects to the **ESP32's own hotspot** (no internet required on phone), opens a browser page, and hits "Start Sharing". The ESP32 receives the GPS/IMU data and forwards it over the home network to the Flask server — where an admin can watch everyone's location update live on a map.
+
+---
+
+## ⬡ Features
+
+```
+ Hardware
+ ─────────────────────────────────────────────────────
+  ⬡  ESP32 dual WiFi mode    AP + Station simultaneously
+  ⬡  Zero extra hardware     no GPS module, no SIM800
+  ⬡  Phone as sensor         uses browser Geolocation API
+  ⬡  IMU data support        accelerometer / gyroscope
+
+ Software
+ ─────────────────────────────────────────────────────
+  ⬡  Captive portal          auto-opens on phone connect
+  ⬡  Real-time forwarding    sub-second GPS relay
+  ⬡  Flask admin dashboard   live map, multiple devices
+  ⬡  Multi-device support    track several phones at once
+  ⬡  Cross-platform          Windows + Linux server support
+  ⬡  Zero subscription       runs entirely on local network
+```
+
+---
+
+## ⬡ System Architecture
+
+| Component | Role | IP Address |
+|---|---|---|
+| 📱 **Phone** | Sends GPS + IMU data via browser | `192.168.4.x` |
+| ⬡ **ESP32** | Dual-WiFi bridge (AP + Station) | `192.168.4.1` (AP side) |
+| 💻 **Laptop/Server** | Runs Flask, shows live map | Your local IP (e.g. `192.168.1.x`) |
+
+---
+
+## ⬡ Quick Start
+
+### 1 — Flash the ESP32
+
+Open `src/config.h` and set your credentials:
 
 ```cpp
-//  PART 1: ESP32 Hotspot (Your phone connects here)
-const char *WIFI_SSID = "ESP32"; 
+// Phone connects to this hotspot
+const char *WIFI_SSID     = "Artemis";
 const char *WIFI_PASSWORD = "12345678";
 
-//  PART 2: Internet/Server Connection (ESP32 connects here)
-const char *HOME_WIFI_SSID = "your_wifi_name";
-const char *HOME_WIFI_PASSWORD = "your_wifi_password";
+// ESP32 connects to your home WiFi
+const char *HOME_WIFI_SSID     = "your_home_wifi";
+const char *HOME_WIFI_PASSWORD = "your_password";
 
-//  PART 3: Backend Server
-const char *FLASK_SERVER_IP = "192.168.x.x"; // Run 'ipconfig' on laptop
+// Your laptop's IP on the home network
+const char *FLASK_SERVER_IP = "192.168.x.x";  // run ipconfig / ip a
 ```
 
-### 2 Flash the ESP32
-Connect your board and upload the firmware via PlatformIO:
-> **Task:** `PlatformIO: Upload`
-
-### 3 Launch the Server
-Start the backend dashboard on your computer:
-```powershell
-# Windows
-.\start_server.bat
+Upload via PlatformIO:
 ```
-*The dashboard will launch at: `http://localhost:5000`*
+PlatformIO → Upload
+```
 
----
-
-##  Usage Instructions
-
-###  For Users (Mobile)
-1.  Connect your phone to WiFi: **`ESP32`** (Pass: `12345678`)
-2.  Open Browser: **[http://192.168.4.1](http://192.168.4.1)**
-3.  Enter a username and toggle **"Start Sharing"**.
-
-###  For Admins (Dashboard)
-1.  Ensure laptop is connected to the **Home WiFi**.
-2.  Open Browser: **[http://localhost:5000](http://localhost:5000)**
-3.  Watch devices appear on the map in real-time! 
-
----
-
-##  Troubleshooting
-
-<details>
-<summary><b> ESP32 not connecting to Home WiFi?</b></summary>
-
-*   **Bandwidth:** Use **2.4GHz** WiFi only (5GHz is not supported).
-*   **Credentials:** Double-check `HOME_WIFI_SSID` and password in `config.h`.
-*   **Range:** Ensure ESP32 is close to the router/hotspot.
-</details>
-
-<details>
-<summary><b> Dashboard not showing data?</b></summary>
-
-*   **IP Mismatch:** Ensure `FLASK_SERVER_IP` in code matches your laptop's actual IP.
-*   **Firewall:** Allow **Python** through Windows Defender Firewall (Port 5000).
-*   **Network:** Laptop and ESP32 must be on the **same** network.
-</details>
-
-<details>
-<summary><b> Phone browser won't load?</b></summary>
-
-*   **Connection:** Verify phone is connected to `ESP32` WiFi.
-*   **Mobile Data:** Turn off mobile data (4G/5G) if page fails to load.
-</details>
-
----
-
-##  Project Structure
+### 2 — Start the Server
 
 ```bash
- Project Root
-   src            #  ESP32 Firmware Source
-    main.cpp     #    - Core Logic
-    config.h     #    - Configuration Settings
-   flask_server   #  Backend Server
-    app.py       #    - Flask App
-    templates    #    - Dashboard UI
-   dashboard      #  Mobile App Files
-   platformio.ini #  Board Config
-   README.md      #  Documentation
+# Linux / Mac
+bash start_server.sh
+
+# Windows
+.\start_server.bat
+
+# Manual
+cd flask_server
+pip install flask
+python app.py
+```
+
+Dashboard opens at: **http://localhost:5000**
+
+### 3 — Track a Phone
+
+1. Connect phone to WiFi: **`Artemis`** (password: `12345678`)
+2. Open browser → **`http://192.168.4.1`**
+3. Enter a name → tap **Start Sharing**
+4. Watch it appear on the admin map instantly
+
+---
+
+## ⬡ Project Structure
+
+```
+artemis/
+│
+├── src/
+│   ├── main.cpp          ← ESP32 firmware — dual WiFi bridge logic
+│   └── config.h          ← All credentials and server settings
+│
+├── flask_server/
+│   ├── app.py            ← Flask backend — receives and serves GPS data
+│   └── templates/        ← Admin dashboard HTML + live map UI
+│
+├── platformio.ini         ← Board config (ESP32 DevKit)
+├── start_server.sh        ← One-click server launch (Linux/Mac)
+├── start_server.bat       ← One-click server launch (Windows)
+└── convert_html.py        ← Utility: embeds assets into ESP32 firmware
 ```
 
 ---
-*Built with  using PlatformIO, ESP32, and Flask.*
+
+## ⬡ Troubleshooting
+
+**ESP32 won't connect to home WiFi**
+- Use 2.4GHz only — ESP32 does not support 5GHz
+- Double-check `HOME_WIFI_SSID` spelling in `config.h`
+- Move ESP32 closer to the router during setup
+
+**Phone browser won't load the page**
+- Make sure phone is connected to `Artemis` hotspot, not home WiFi
+- Turn off mobile data (4G/5G) — it overrides the local connection
+- Try `http://192.168.4.1` manually if captive portal doesn't open
+
+**Dashboard not receiving data**
+- Run `ipconfig` (Windows) or `ip a` (Linux) and update `FLASK_SERVER_IP`
+- Allow Python through Windows Defender Firewall on port 5000
+- Confirm laptop and ESP32 are on the same home network
+
+---
+
+## ⬡ Use Cases
+
+```
+✦  Family location sharing      no subscription, works at home
+✦  Workshop / warehouse         track workers on local network  
+✦  Event coordination           festival staff, campus ops
+✦  Robotics / drone tracking    mount phone, stream to ROS
+✦  Field research               GPS logging without cell coverage
+```
+
+---
+
+## ⬡ What Makes This Different
+
+Most GPS sharing solutions need either:
+- A SIM card in the tracked device, or
+- Both devices on the internet simultaneously
+
+Artemis needs **neither**. The phone only needs to be in WiFi range of the ESP32. The ESP32 handles all the bridging. This opens up use cases in basements, warehouses, underground, or any place with local WiFi but no cell signal.
+
+---
+
+## ⬡ Built With
+
+- **ESP32** — dual WiFi mode (AP + Station)
+- **PlatformIO** — firmware build system
+- **Flask** — Python backend
+- **Leaflet.js** — interactive map in dashboard
+- **Browser Geolocation API** — GPS source on phone
+
+---
+
+## ⬡ License
+
+MIT — build freely, hack freely.
+
+---
+
+<div align="center">
+
+```
+no SIM · no subscription · no limits
+```
+
+*built with an ESP32 and stubbornness*
+
+</div>
